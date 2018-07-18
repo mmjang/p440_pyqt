@@ -1,5 +1,5 @@
-vs/
-vscode/
-__pycache__
-.pyproj
-.sln
+.vs/
+.vscode/
+__pycache__/
+*.pyproj
+*.sln
