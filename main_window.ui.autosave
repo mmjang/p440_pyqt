@@ -45,7 +45,7 @@
      <enum>QTabWidget::Triangular</enum>
     </property>
     <property name="currentIndex">
-     <number>1</number>
+     <number>0</number>
     </property>
     <property name="documentMode">
      <bool>false</bool>
@@ -602,8 +602,8 @@
      <widget class="QDial" name="dial">
       <property name="geometry">
        <rect>
-        <x>0</x>
-        <y>20</y>
+        <x>10</x>
+        <y>0</y>
         <width>141</width>
         <height>151</height>
        </rect>

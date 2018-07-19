@@ -87,6 +87,7 @@ class AppWindow(QMainWindow):
     
     def set_callback(self):
         self.ui.btn_read_config.clicked.connect(self.read_config)
+        self.ui.btn_close.mouseReleaseEvent = lambda self, event: app.quit()
 
         self.ui.btn_0.clicked.connect(lambda x:self.write_number(0))
         self.ui.btn_1.clicked.connect(lambda x:self.write_number(1))
