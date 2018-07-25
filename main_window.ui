@@ -599,7 +599,7 @@
       </property>
       <layout class="QVBoxLayout" name="figure_layout"/>
      </widget>
-     <widget class="QPushButton" name="pushButton">
+     <widget class="QPushButton" name="pushButton_run_stop">
       <property name="geometry">
        <rect>
         <x>20</x>
@@ -612,7 +612,7 @@
        <string>开始</string>
       </property>
      </widget>
-     <widget class="QPushButton" name="pushButton_2">
+     <widget class="QPushButton" name="pushButton_save_data">
       <property name="geometry">
        <rect>
         <x>10</x>
@@ -636,6 +636,19 @@
       </property>
       <property name="text">
        <string>显示设置</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="pushButton_clear">
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>90</y>
+        <width>101</width>
+        <height>51</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>清除</string>
       </property>
      </widget>
     </widget>

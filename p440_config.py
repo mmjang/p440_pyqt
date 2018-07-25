@@ -1,5 +1,5 @@
 from struct import *
-
+import math
 class Config:
 
     '''
@@ -28,10 +28,10 @@ class Config:
             frame_bytes is confirm message
         '''
         struct_pattern = '>HHIiiHHHHHHBBBBBBBBII'
-        (self.message_type, self.node_id, self.scan_start, self.scan_end,
+        (self.message_type, self.message_id, self.node_id, self.scan_start, self.scan_end,
         self.scan_resolution, self.base_int_index, self.seg1, self.seg2,
         self.seg3, self.seg4, self.seg1_int, self.seg2_int, self.seg3_int,
-        self.seg4_int, self.antenna_mode, self.transmit_gain, self.transmit_gain,
+        self.seg4_int, self.antenna_mode, self.transmit_gain,
         self.code_channel, self.persist_flag, self.time_stamp, self.status) = unpack(struct_pattern, frame_bytes)
 
     def to_bytes(self):
@@ -40,13 +40,15 @@ class Config:
         '''
         self.persist_flag = 1
         self.message_type = 0x1001
+        self.node_id = 100
+        self.scan_resolution = 32
         struct_pattern = '>HHIiiHHHHHHBBBBBBBB'
         return pack(
             struct_pattern,
-            self.message_type, self.node_id, self.scan_start, self.scan_end,
+            self.message_type, self.message_id, self.node_id, self.scan_start, self.scan_end,
         self.scan_resolution, self.base_int_index, self.seg1, self.seg2,
         self.seg3, self.seg4, self.seg1_int, self.seg2_int, self.seg3_int,
-        self.seg4_int, self.antenna_mode, self.transmit_gain, self.transmit_gain,
+        self.seg4_int, self.antenna_mode, self.transmit_gain,
         self.code_channel, self.persist_flag
         )
 
@@ -61,17 +63,22 @@ def m2ps(m1, m2):
     T2 = 2 * m2 / c + dT0
 
     Nbin = (T2 - T1) / Tbin
-    Nseg = ceil(Nbin / dNbin)
-    Nbin = dNbin * Nseg
+    Nseg = math.ceil(Nbin / dNBin)
+    Nbin = dNBin * Nseg
 
-    T1 = floor(1000*dTmin*floor(T1/dTmin)) # in ps
-    T2 = floor(1000*dTmin*floor(T2/dTmin)) # in ps
+    T1 = math.floor(1000*dTmin* math.floor(T1/dTmin)) # in ps
+    T2 = math.floor(1000*dTmin* math.floor(T2/dTmin)) # in ps
+    return T1, T2
 
 def ps2m(ps):
 
     c = 0.29979
     dT0 = 10
-    return c * (1000 * ps - dT0) / 2
+    return round(c * (ps / 1000 - dT0) / 2, 2)
+
+if __name__ == '__main__':
+
+    print(m2ps(0,5))
 
 
 
