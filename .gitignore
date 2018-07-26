@@ -1,5 +1,8 @@
 .vs/
 .vscode/
+dist/
+build/
+main.spec
 __pycache__/
 *.pyproj
 *.sln
