@@ -2,8 +2,6 @@ import sys
 from PyQt5.QtWidgets import QDialog, QApplication, QMainWindow, QMessageBox
 from PyQt5 import Qt, QtCore
 from main_window import Ui_MainWindow
-import serial
-import serial.tools.list_ports
 import numpy as np
 import matplotlib.pyplot as plt
 import utils
@@ -15,6 +13,7 @@ import socket
 from struct import *
 from threading import Thread, Condition, Lock
 import p440_config
+import datetime
 
 queue = []
 lock = Lock()
@@ -96,6 +95,7 @@ class AppWindow(QMainWindow):
         self.ui.btn_close.mouseReleaseEvent = lambda self, event: app.quit()
         self.ui.pushButton_run_stop.clicked.connect(self.run_stop)
         self.ui.pushButton_clear.clicked.connect(self.clear)
+        self.ui.pushButton_save_data.clicked.connect(self.save_data)
 
         self.ui.btn_0.clicked.connect(lambda x:self.write_number(0))
         self.ui.btn_1.clicked.connect(lambda x:self.write_number(1))
@@ -159,8 +159,9 @@ class AppWindow(QMainWindow):
             return
         global queue
         if queue:
-            lock.acquire()
-            for line in queue:
+            #lock.acquire()
+            while len(queue) > 0:
+                line = queue.pop(0)
                 self.arr_original.add(line)
                 if len(self.data_previous) == 0:
                     self.data_previous = line
@@ -174,10 +175,14 @@ class AppWindow(QMainWindow):
             envelop = np.abs(hilbert(n_last[0:-1] - n_last[1:]))
             envelop = np.clip(np.round(63 * envelop / 10e3) + 1, -1e5, 64)
             # self.ax1.imshow(self.arr_processed.get_array_last_n(image_row), aspect = 'auto')
-            self.ax1.imshow(envelop, aspect = 'auto')
+            self.ax1.imshow(envelop, aspect = 'auto', extent = [float(self.ui.lineEdit_distance_start.text()),
+                                                                float(self.ui.lineEdit_distance_end.text()),
+                                                                image_row,
+                                                                0
+            ])
             self.canvas.draw()
-            queue = []
-            lock.release()
+            #queue = []
+            #lock.release()
     
     def run_stop(self):
 
@@ -240,6 +245,12 @@ class AppWindow(QMainWindow):
             current_text = current_text + input_char
         
         edit.setText(current_text)
+
+    def save_data(self):
+
+        f_name = str(datetime.datetime.now()).replace(" ","_").replace(":","_")[0:-7]
+        np.save(f_name, self.arr_original.get_array())
+        self.show_message(f_name + " 已保存")
 
     def show_message(self, text):
 
@@ -313,12 +324,10 @@ class ProducerThread(Thread):
             #print('received' + str(len(data)))
             #print(data[0:2])
             #print(data, addr)
-            packet_get_config = pack('>HHHHI', 0x1003, 0, 1, 0, 0)
+            packet_get_config = pack('>HHHHI', 0x1003, 0, 1, 0, 150 * 1000)
             s.sendto(packet_get_config, (ip, port))
             while True:
                 data, addr = s.recvfrom(2000)
-                print(data)
-                print(len(data))
                 #print('received')
                 if data[0:2] == b'\xf2\x01':
 
@@ -332,9 +341,9 @@ class ProducerThread(Thread):
                         print('binarybuff ' + str(i))
                         #print(binary_buff)
                         new_signal = np.frombuffer(binary_buff, dtype = dt)
-                        lock.acquire()
+                        #lock.acquire()
                         queue.append(new_signal)
-                        lock.release()
+                        #lock.release()
                         break
 
 app = QApplication(sys.argv)
