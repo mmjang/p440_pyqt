@@ -7,13 +7,16 @@ import matplotlib.pyplot as plt
 import utils
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
+import matplotlib.gridspec as gridspec
 import threading
 from scipy.signal import hilbert, chirp
+from scipy.signal import lfilter, butter
 import socket
 from struct import *
 from threading import Thread, Condition, Lock
 import p440_config
 import datetime
+from comman_libray_for_python import common
 
 queue = []
 lock = Lock()
@@ -26,7 +29,7 @@ port = 21210
 update_figure_q = False
 producer_thread_running_q = False
 
-image_row = 200
+image_row = 1000
 '''
 message_type    uint16
 message_id      uint16
@@ -72,7 +75,11 @@ class AppWindow(QMainWindow):
         self.toolbar = NavigationToolbar(self.canvas, self)
         self.ui.figure_layout.addWidget(self.toolbar)
         self.ui.figure_layout.addWidget(self.canvas)
-        self.ax1 = self.figure.add_subplot(111)
+        gs = gridspec.GridSpec(3, 1, height_ratios=[1, 1, 2])
+        self.ax1 = self.figure.add_subplot(gs[2])
+        self.ax2 = self.figure.add_subplot(gs[0])
+        self.ax3 = self.figure.add_subplot(gs[1])
+    
         #ax1.plot(np.sin(np.arange(1,100,0.1)))
         #ax2 = self.figure.add_subplot(212)
         #ax2.plot(np.cos(np.arange(1,100,0.1)))       
@@ -82,12 +89,15 @@ class AppWindow(QMainWindow):
         #setup timer
         timer = QtCore.QTimer(self)
         timer.timeout.connect(self.update_canvas)
-        timer.start(50)
+        timer.start(100)
 
         self.producer = ProducerThread().start()
 
         self.data_arr = []
         self.iter = 0
+
+        #butt
+        self.b, self.a = butter(6, 0.4, btype='low', analog=False)
     
     def set_callback(self):
         self.ui.btn_read_config.clicked.connect(self.read_config)
@@ -172,10 +182,15 @@ class AppWindow(QMainWindow):
                     self.data_previous = line
             self.ax1.clear()
             n_last = self.arr_original.get_array_last_n(image_row + 1)
-            envelop = np.abs(hilbert(n_last[0:-1] - n_last[1:]))
-            envelop = np.clip(np.round(63 * envelop / 10e3) + 1, -1e5, 64)
+            self.ax2.clear()
+            self.ax2.plot(lfilter(self.b, self.a, self.data_previous))
+            #envelop = np.abs(hilbert(n_last[0:-1] - n_last[1:]))
+            envelop = lfilter(self.b, self.a, n_last)
+            self.ax3.clear()
+            self.ax3.plot(lfilter(self.b, self.a, np.abs(envelop[:,75:150]).sum(axis=1))[10:])
+            #envelop = np.clip(np.round(63 * envelop / 10e3) + 1, -1e5, 64)
             # self.ax1.imshow(self.arr_processed.get_array_last_n(image_row), aspect = 'auto')
-            self.ax1.imshow(envelop, aspect = 'auto', extent = [float(self.ui.lineEdit_distance_start.text()),
+            self.ax1.imshow(common.remove_background(envelop), aspect = 'auto', extent = [float(self.ui.lineEdit_distance_start.text()),
                                                                 float(self.ui.lineEdit_distance_end.text()),
                                                                 image_row,
                                                                 0
@@ -324,7 +339,7 @@ class ProducerThread(Thread):
             #print('received' + str(len(data)))
             #print(data[0:2])
             #print(data, addr)
-            packet_get_config = pack('>HHHHI', 0x1003, 0, 1, 0, 150 * 1000)
+            packet_get_config = pack('>HHHHI', 0x1003, 0, 1, 0, 0 * 1000)
             s.sendto(packet_get_config, (ip, port))
             while True:
                 data, addr = s.recvfrom(2000)

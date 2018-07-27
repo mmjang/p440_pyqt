@@ -11,11 +11,11 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(800, 480)
+        MainWindow.resize(1296, 787)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.tabWidget = QtWidgets.QTabWidget(self.centralwidget)
-        self.tabWidget.setGeometry(QtCore.QRect(0, 0, 801, 471))
+        self.tabWidget.setGeometry(QtCore.QRect(0, 0, 1281, 751))
         font = QtGui.QFont()
         font.setFamily("Arial")
         font.setPointSize(22)
@@ -251,7 +251,7 @@ class Ui_MainWindow(object):
         self.tab_2 = QtWidgets.QWidget()
         self.tab_2.setObjectName("tab_2")
         self.verticalLayoutWidget = QtWidgets.QWidget(self.tab_2)
-        self.verticalLayoutWidget.setGeometry(QtCore.QRect(160, 0, 591, 451))
+        self.verticalLayoutWidget.setGeometry(QtCore.QRect(160, 0, 1071, 731))
         self.verticalLayoutWidget.setObjectName("verticalLayoutWidget")
         self.figure_layout = QtWidgets.QVBoxLayout(self.verticalLayoutWidget)
         self.figure_layout.setContentsMargins(0, 0, 0, 0)
