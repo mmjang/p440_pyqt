@@ -9,6 +9,7 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 import threading
 from scipy.signal import hilbert, chirp
+from scipy.signal import lfilter, butter
 import socket
 from struct import *
 from threading import Thread, Condition, Lock
@@ -25,7 +26,6 @@ port = 21210
 # global status
 update_figure_q = False
 producer_thread_running_q = False
-
 image_row = 200
 '''
 message_type    uint16
@@ -88,6 +88,8 @@ class AppWindow(QMainWindow):
 
         self.data_arr = []
         self.iter = 0
+
+        self.b, self.a = butter(6, 0.4, btype='low', analog=False)
     
     def set_callback(self):
         self.ui.btn_read_config.clicked.connect(self.read_config)
@@ -155,6 +157,8 @@ class AppWindow(QMainWindow):
 
     def update_canvas(self):
 
+        f_b = [0.872753, -1.745507285, 0.8727]
+        f_a = [1, -1.7292, 0.761765]
         if not update_figure_q:
             return
         global queue
@@ -172,8 +176,15 @@ class AppWindow(QMainWindow):
                     self.data_previous = line
             self.ax1.clear()
             n_last = self.arr_original.get_array_last_n(image_row + 1)
-            envelop = np.abs(hilbert(n_last[0:-1] - n_last[1:]))
-            envelop = np.clip(np.round(63 * envelop / 10e3) + 1, -1e5, 64)
+            #envelop = np.abs(hilbert(n_last))
+            #envelop = lfilter(self.b, self.a, n_last)
+            #envelop = lfilter(f_b, f_a, envelop, axis = -2)
+            for j in range(n_last.shape[0]):
+                n_last[j] = utils.envelope(n_last[j])
+            for i in range(n_last.shape[1]):
+                n_last[:,i] = np.convolve(n_last[:,i], [1, -0.6, -0.3, -0.1], mode='same')
+            #envelop = lfilter(self.b, self.a, envelop)
+            envelop = np.clip(np.round(63 * n_last / 10e3) + 1, -1e5, 64)
             # self.ax1.imshow(self.arr_processed.get_array_last_n(image_row), aspect = 'auto')
             self.ax1.imshow(envelop, aspect = 'auto', extent = [float(self.ui.lineEdit_distance_start.text()),
                                                                 float(self.ui.lineEdit_distance_end.text()),

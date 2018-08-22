@@ -1,5 +1,7 @@
 import numpy as np
-
+from scipy.signal import hilbert, chirp
+from scipy.signal import lfilter, butter
+b, a = butter(6, 0.4, btype='low', analog=False)
 def load_gain_data(gain_data_file = 'gain_data.txt'):
     '''
     load the gain map:
@@ -13,6 +15,12 @@ def load_gain_data(gain_data_file = 'gain_data.txt'):
             result.append([key, eval(value)])
     f.close()
     return result
+
+def envelope(x):
+    y = np.sqrt(2*np.clip(lfilter(b, a, x**2), 0, 1e10))
+    nord = len(a) - 1
+    nshift = int(nord / 2)
+    return np.append(y[nshift:], np.zeros(nshift))
 
 class SignalArray:
     '''
